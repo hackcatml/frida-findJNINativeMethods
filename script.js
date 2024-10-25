@@ -93,7 +93,7 @@ function init(module_name) {
     } else {
         let module = Process.findModuleByName(module_name);
         if (module === undefined) {
-            console.log(`Cannot find ${module}`);
+            console.log(`Cannot find ${module_name}`);
             return;
         }
         scanJNINativeMethod(module);
