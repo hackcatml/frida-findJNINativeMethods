@@ -19,18 +19,15 @@ function generatePatternArm64(module_base) {
     }
 
     const base_byte = module_base_pattern_arr[0];
-    const how_many_00_needs = Process.pointerSize - module_base_pattern_arr.length - 1;
+    const how_many_00_needs = Process.pointerSize - module_base_pattern_arr.length;
     let pattern = base_byte;
+    pattern += " 00".repeat(how_many_00_needs - 1) + " ??";
 
-    const how_many_questionmark_needs_first = Process.pointerSize - how_many_00_needs - 1;
-    pattern += " 00".repeat(how_many_00_needs) + " ??".repeat(how_many_questionmark_needs_first);
-
-    const how_many_questionmark_needs_second = Process.pointerSize - how_many_00_needs - 2;
-    pattern += ` ${base_byte}`
-    pattern += ` 00`.repeat(how_many_00_needs) + " ??".repeat(how_many_questionmark_needs_second);
-
-    pattern += ` ${module_base_pattern_arr[1]} ${base_byte}`
-    pattern += ` 00`.repeat(how_many_00_needs);
+    const how_many_questionmark_needs = Process.pointerSize - how_many_00_needs - 1;
+    pattern += " ??".repeat(how_many_questionmark_needs);
+    pattern += ` ${base_byte}` + " 00".repeat(how_many_00_needs - 1) + " ??";
+    pattern += " ??".repeat(how_many_questionmark_needs);
+    pattern += ` ${base_byte}` + " 00".repeat(how_many_00_needs);
 
     return pattern;
 }
@@ -46,15 +43,17 @@ const ensureCodeReadableModule = new CModule(`
 let ensure_code_readable = new NativeFunction(ensureCodeReadableModule.ensure_code_readable, 'void', ['pointer', 'uint64']);
 
 function scanJNINativeMethod(module) {
+    const pattern = generatePatternArm64(module.base);
+
     console.log(`\nModule: ${module.name}`);
+    console.log(`JNINativeMethod scan pattern: ${pattern}\n`);
     console.log(`Class\t\tMethod\t\tSig\t\tFunction Ptr\t\tOffset`);
     console.log(`================================================================================================`);
     
-    const pattern = generatePatternArm64(module.base);
     ensure_code_readable(ptr(module.base), module.size);
     
     for (const match of Memory.scanSync(module.base, module.size, pattern)) {
-        let JNINativeMethod = match.address.sub(module_base_pattern_arr.length - 1);
+        let JNINativeMethod = match.address.sub(4);
         try {
             let method_name =  JNINativeMethod.readPointer().readUtf8String();
             let regex_for_non_method = /-|\s|\(|\)|%|,|\[|\]/;
