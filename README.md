@@ -12,6 +12,8 @@ frida -UF -l script.js
 ```
 Call init(<moduleName>) on terminal(ex. init("libart.so"))
 ```
+![image](https://github.com/user-attachments/assets/03ac2984-5009-45ac-86a7-4e2bf3ac16da)
+
 
 # Contact
 - Channel: https://t.me/hackcatml1<br>
